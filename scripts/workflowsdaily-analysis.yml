@@ -1,0 +1,39 @@
+name: 📈 Daily Stock Analysis
+
+on:
+  schedule:
+    - cron: '0 7 * * *'
+  workflow_dispatch:
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: ✅ Check out code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: 📦 Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install anthropic pandas requests
+      
+      - name: 🤖 Run analysis with Claude
+        env:
+          CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
+        run: cd scripts && python analyze_stocks.py
+      
+      - name: 📤 Commit and push results
+        run: |
+          git config user.name "Stock Analyzer Bot"
+          git config user.email "bot@github.com"
+          git add data/analysis_output/
+          git commit -m "📊 Daily analysis: $(date +%Y-%m-%d)" || echo "No changes to commit"
+          git push
